@@ -15,3 +15,9 @@ npm run build  # Emit production assets into dist/
 ```
 
 The GitHub Pages workflow publishes `dist/` to the `gh-pages` branch and drops SPA fallbacks (`404.html`, `.nojekyll`) alongside the bundle.
+
+## Phone-only steps
+
+- Visit https://nbschultz97.github.io/SORDFIELDKIT/ → Add to Home screen.
+- For offline basemap: upload public/tiles/basemap.pmtiles (via phone), wait for deploy, reopen app, confirm status shows “local tiles”.
+- Buttons: 📍 Locate, ➕ Waypoint, ⬇️ Export.
