@@ -3,13 +3,31 @@ import { get, set, del } from "idb-keyval";
 export const PM_TILES_CACHE_KEY = "sord-field-kit:pmtiles";
 const SETTINGS_PREFIX = "sord-field-kit:settings:";
 
-export async function savePMTilesBlob(blob: Blob) {
-  await set(PM_TILES_CACHE_KEY, blob);
+export interface PMTilesCacheRecord {
+  blob: Blob;
+  sourceUrl?: string;
 }
 
-export async function readPMTilesBlob(): Promise<Blob | null> {
-  const value = await get<Blob | undefined>(PM_TILES_CACHE_KEY);
-  return value ?? null;
+export async function savePMTilesBlob(blob: Blob, sourceUrl?: string) {
+  const record: PMTilesCacheRecord = { blob, sourceUrl };
+  await set(PM_TILES_CACHE_KEY, record);
+}
+
+export async function readPMTilesBlob(): Promise<PMTilesCacheRecord | null> {
+  const value = await get<PMTilesCacheRecord | Blob | undefined>(
+    PM_TILES_CACHE_KEY
+  );
+  if (!value) return null;
+  if (value instanceof Blob) {
+    return { blob: value };
+  }
+  if (typeof value === "object" && value !== null && "blob" in value) {
+    const record = value as PMTilesCacheRecord;
+    if (record.blob instanceof Blob) {
+      return { blob: record.blob, sourceUrl: record.sourceUrl };
+    }
+  }
+  return null;
 }
 
 export async function clearPMTilesBlob() {

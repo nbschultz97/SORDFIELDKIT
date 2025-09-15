@@ -75,6 +75,7 @@ interface MapViewProps {
   visibleLayers: Record<string, boolean>;
   onMapReady?: (map: MapLibreMap, info: BasemapInfo) => void;
   offlineBlob: Blob | null;
+  offlineSourceUrl: string | null;
   onSourceChanged?: (info: BasemapInfo) => void;
 }
 
@@ -83,6 +84,7 @@ export function MapView({
   visibleLayers,
   onMapReady,
   offlineBlob,
+  offlineSourceUrl,
   onSourceChanged,
 }: MapViewProps) {
   const mapContainer = useRef<HTMLDivElement | null>(null);
@@ -90,6 +92,7 @@ export function MapView({
   const markersRef = useRef<Map<string, maplibregl.Marker>>(new Map());
   const layerIdsRef = useRef<Record<string, string>>({});
   const offlineBlobRef = useRef<Blob | null>(offlineBlob);
+  const offlineSourceUrlRef = useRef<string | null>(offlineSourceUrl);
   const readyAnnouncedRef = useRef(false);
 
   const removeLayerCollection = useCallback((map: MapLibreMap) => {
@@ -103,7 +106,10 @@ export function MapView({
 
   const installBasemap = useCallback(
     async (map: MapLibreMap, blob: Blob | null) => {
-      const { pmtiles, info } = await resolvePMTiles(blob);
+      const { pmtiles, info } = await resolvePMTiles(
+        blob,
+        blob ? offlineSourceUrlRef.current : null
+      );
       removeLayerCollection(map);
       addVectorSource(map, SOURCE_ID, info.tileUrl, "© OpenStreetMap, © Protomaps");
       try {
@@ -181,12 +187,13 @@ export function MapView({
 
   useEffect(() => {
     offlineBlobRef.current = offlineBlob;
+    offlineSourceUrlRef.current = offlineSourceUrl;
     const map = mapRef.current;
     if (!map) return;
     installBasemap(map, offlineBlob).catch((error) =>
       console.error("Failed to switch PMTiles source", error)
     );
-  }, [offlineBlob, installBasemap]);
+  }, [offlineBlob, offlineSourceUrl, installBasemap]);
 
   useEffect(() => {
     const map = mapRef.current;

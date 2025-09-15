@@ -37,14 +37,15 @@ export interface BasemapInfo {
   sourceUrl: string;
   /** URL registered with MapLibre (pmtiles://...). */
   tileUrl: string;
-  /** True if a local file or cached blob was used. */
+  /** True if a local file path or unknown cached blob was used. */
   usedLocal: boolean;
   /** True if the archive came from IndexedDB. */
   usedOfflineCache: boolean;
 }
 
 export async function resolvePMTiles(
-  offlineBlob?: Blob | null
+  offlineBlob?: Blob | null,
+  offlineSourceUrl?: string | null
 ): Promise<{ pmtiles: PMTiles; info: BasemapInfo }> {
   const protocol = ensureProtocol();
   if (offlineBlob) {
@@ -53,12 +54,18 @@ export async function resolvePMTiles(
     });
     const pmtiles = new PMTiles(new FileSource(file));
     protocol.add(pmtiles);
+    const sourceUrl =
+      offlineSourceUrl && offlineSourceUrl.trim().length > 0
+        ? offlineSourceUrl
+        : "indexeddb://offline-basemap";
+    const usedLocal =
+      sourceUrl === LOCAL_PM_TILES_PATH || sourceUrl.startsWith("indexeddb://");
     return {
       pmtiles,
       info: {
-        sourceUrl: "indexeddb://offline-basemap",
+        sourceUrl,
         tileUrl: `pmtiles://${pmtiles.source.getKey()}`,
-        usedLocal: true,
+        usedLocal,
         usedOfflineCache: true,
       },
     };

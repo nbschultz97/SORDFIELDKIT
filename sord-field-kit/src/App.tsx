@@ -82,6 +82,9 @@ export default function App() {
   const pmtilesFetchUrl = useMemo(() => {
     if (!basemapInfo) return null;
     if (basemapInfo.usedOfflineCache) {
+      if (!basemapInfo.sourceUrl.startsWith("indexeddb://")) {
+        return basemapInfo.sourceUrl;
+      }
       return basemapInfo.usedLocal ? LOCAL_PM_TILES_PATH : REMOTE_PM_TILES_URL;
     }
     return basemapInfo.sourceUrl;
@@ -408,6 +411,7 @@ export default function App() {
           waypoints={waypoints}
           visibleLayers={layerVisibility}
           offlineBlob={offline.offlineBlob}
+          offlineSourceUrl={offline.cachedSourceUrl}
           onMapReady={(map, info) => {
             mapInstanceRef.current = map;
             setBasemapInfo(info);
@@ -435,7 +439,8 @@ export default function App() {
           onPause: offline.pauseCaching,
           onResume: offline.resumeCaching,
           onClear: offline.clearCache,
-          activeUrl: pmtilesFetchUrl ?? undefined,
+          activeUrl:
+            offline.cachedSourceUrl ?? pmtilesFetchUrl ?? undefined,
         }}
         mediapipe={{
           enabled: mediapipeEnabled,
