@@ -46,9 +46,9 @@ function formatOfflineStatus(status: OfflineStatus, progress: number) {
     case "downloading":
       return `Caching tiles… ${progress}% (${status.storedChunks}/${status.totalChunks || "?"})`;
     case "ready":
-      return `Cache ready (${status.totalChunks || status.storedChunks} segments)`;
+      return `Cache ready (${status.storedChunks}/${status.totalChunks || status.storedChunks} segments)`;
     case "paused":
-      return `Paused at ${progress}%`;
+      return `Paused at ${progress}% (${status.storedChunks}/${status.totalChunks || "?"})`;
     case "error":
       return status.error ? `Error: ${status.error}` : "Cache error";
     default:

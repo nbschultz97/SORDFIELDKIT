@@ -362,7 +362,7 @@ export default function App() {
       case "locating":
         return "GPS locating…";
       case "error":
-        return gpsError ? `GPS error` : "GPS error";
+        return gpsError ? `GPS error: ${gpsError}` : "GPS error";
       default:
         return "GPS idle";
     }
@@ -455,7 +455,7 @@ export default function App() {
           onPause: offline.pauseCaching,
           onResume: offline.resumeCaching,
           onClear: offline.clearCache,
-          activeUrl: pmtilesFetchUrl ?? undefined,
+          activeUrl: offline.activeUrl ?? undefined,
         }}
         mediapipe={{
           enabled: mediapipeEnabled,
