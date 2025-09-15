@@ -1,5 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { clearPMTilesBlob, readPMTilesBlob, savePMTilesBlob, readSetting, writeSetting } from "../lib/storage";
+import {
+  clearPMTilesBlob,
+  readPMTilesBlob,
+  savePMTilesBlob,
+  readSetting,
+  writeSetting,
+} from "../lib/storage";
 
 export type OfflinePhase = "idle" | "downloading" | "paused" | "ready" | "error";
 
@@ -18,6 +24,7 @@ const CHUNK_SIZE = 64 * 1024;
 export function useOffline(pmtilesUrl: string | null) {
   const [enabled, setEnabled] = useState(() => readSetting(PREF_KEY, false));
   const [offlineBlob, setOfflineBlob] = useState<Blob | null>(null);
+  const [cachedSourceUrl, setCachedSourceUrl] = useState<string | null>(null);
   const [hasCache, setHasCache] = useState(false);
   const [status, setStatus] = useState<OfflineStatus>({
     phase: "idle",
@@ -32,9 +39,11 @@ export function useOffline(pmtilesUrl: string | null) {
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const blob = await readPMTilesBlob();
+      const record = await readPMTilesBlob();
+      const blob = record?.blob ?? null;
       if (!cancelled) {
         setOfflineBlob(blob);
+        setCachedSourceUrl(record?.sourceUrl ?? null);
         setHasCache(Boolean(blob));
         if (blob) {
           setStatus((prev) => ({
@@ -79,6 +88,7 @@ export function useOffline(pmtilesUrl: string | null) {
     const controller = new AbortController();
     controllerRef.current = controller;
     activeUrlRef.current = pmtilesUrl;
+    setCachedSourceUrl(pmtilesUrl);
     setStatus({
       phase: "downloading",
       storedChunks: 0,
@@ -119,9 +129,10 @@ export function useOffline(pmtilesUrl: string | null) {
         offset += chunk.length;
       }
       const blob = new Blob([buffer], { type: "application/octet-stream" });
-      await savePMTilesBlob(blob);
+      await savePMTilesBlob(blob, pmtilesUrl);
       setOfflineBlob(blob);
       setHasCache(true);
+      setCachedSourceUrl(pmtilesUrl);
       setStatus({
         phase: "ready",
         storedChunks: estimatedChunks || storedChunks || 1,
@@ -163,6 +174,7 @@ export function useOffline(pmtilesUrl: string | null) {
     resetController();
     await clearPMTilesBlob();
     setOfflineBlob(null);
+    setCachedSourceUrl(null);
     setHasCache(false);
     setStatus({
       phase: "idle",
@@ -204,5 +216,6 @@ export function useOffline(pmtilesUrl: string | null) {
     resumeCaching,
     clearCache,
     activeUrl: activeUrlRef.current,
+    cachedSourceUrl,
   };
 }
